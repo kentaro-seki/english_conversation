@@ -3,7 +3,9 @@ import os
 import time
 from pathlib import Path
 import wave
-import pyaudio
+# import pyaudio  # 問題があるためコメントアウト
+import sounddevice as sd
+import soundfile as sf
 from pydub import AudioSegment
 from audiorecorder import audiorecorder
 import numpy as np
@@ -98,24 +100,13 @@ def play_wav(audio_output_file_path, speed=1.0):
 
         modified_audio.export(audio_output_file_path, format="wav")
 
-    # PyAudioで再生
-    with wave.open(audio_output_file_path, 'rb') as play_target_file:
-        p = pyaudio.PyAudio()
-        stream = p.open(
-            format=p.get_format_from_width(play_target_file.getsampwidth()),
-            channels=play_target_file.getnchannels(),
-            rate=play_target_file.getframerate(),
-            output=True
-        )
-
-        data = play_target_file.readframes(1024)
-        while data:
-            stream.write(data)
-            data = play_target_file.readframes(1024)
-
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
+    # sounddeviceで再生
+    try:
+        data, samplerate = sf.read(audio_output_file_path)
+        sd.play(data, samplerate)
+        sd.wait()  # 再生完了まで待機
+    except Exception as e:
+        st.error(f"音声再生エラー: {e}")
     
     # LLMからの回答の音声ファイルを削除
     os.remove(audio_output_file_path)
