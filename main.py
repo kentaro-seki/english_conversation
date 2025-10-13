@@ -144,10 +144,27 @@ if st.session_state.start_flg:
         if not st.session_state.chat_open_flg:
             with st.spinner('問題文生成中...'):
                 st.session_state.problem, llm_response_audio = ft.create_problem_and_play_audio()
+            
+            # --- 音声ファイルパスを保存（もう一度聞く機能用） ---
+            st.session_state["last_audio_path"] = f"{ct.AUDIO_OUTPUT_DIR}/audio_output_latest.wav"
 
             st.session_state.chat_open_flg = True
             st.session_state.dictation_flg = False
             st.rerun()
+        
+        # --- 🔁 もう一度聞くボタン追加（chat_open_flgの条件外） ---
+        if "last_audio_path" in st.session_state:
+            replay_button = st.button("🔁 もう一度聞く")
+            
+            if replay_button:
+                if os.path.exists(st.session_state["last_audio_path"]):
+                    with st.spinner("🎵 再生中..."):
+                        ft.play_wav(st.session_state["last_audio_path"], st.session_state.speed, preserve_file=True)
+                    st.success("再生完了")
+                else:
+                    st.warning("音声データが見つかりません。もう一度問題を生成してください。")
+                # ボタンが押された場合はここで処理を停止
+                st.stop()
         # チャット入力時の処理
         else:
             # チャット欄から入力された場合にのみ評価処理が実行されるようにする

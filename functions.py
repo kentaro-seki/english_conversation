@@ -77,12 +77,13 @@ def save_to_wav(llm_response_audio, audio_output_file_path):
     # 音声出力用に一時的に作ったmp3ファイルを削除
     os.remove(temp_audio_output_filename)
 
-def play_wav(audio_output_file_path, speed=1.0):
+def play_wav(audio_output_file_path, speed=1.0, preserve_file=False):
     """
     音声ファイルの読み上げ
     Args:
         audio_output_file_path: 音声ファイルのパス
         speed: 再生速度（1.0が通常速度、0.5で半分の速さ、2.0で倍速など）
+        preserve_file: ファイルを削除せずに保持するかどうか
     """
 
     # 音声ファイルの読み込み
@@ -108,8 +109,9 @@ def play_wav(audio_output_file_path, speed=1.0):
     except Exception as e:
         st.error(f"音声再生エラー: {e}")
     
-    # LLMからの回答の音声ファイルを削除
-    os.remove(audio_output_file_path)
+    # ファイル削除（preserve_fileがFalseの場合のみ）
+    if not preserve_file:
+        os.remove(audio_output_file_path)
 
 def create_chain(system_template):
     """
@@ -148,12 +150,12 @@ def create_problem_and_play_audio():
         input=problem
     )
 
-    # 音声ファイルの作成
-    audio_output_file_path = f"{ct.AUDIO_OUTPUT_DIR}/audio_output_{int(time.time())}.wav"
+    # 音声ファイルの作成（もう一度聞く機能用に固定ファイル名を使用）
+    audio_output_file_path = f"{ct.AUDIO_OUTPUT_DIR}/audio_output_latest.wav"
     save_to_wav(llm_response_audio.content, audio_output_file_path)
 
-    # 音声ファイルの読み上げ
-    play_wav(audio_output_file_path, st.session_state.speed)
+    # 音声ファイルの読み上げ（ファイルを保持）
+    play_wav(audio_output_file_path, st.session_state.speed, preserve_file=True)
 
     return problem, llm_response_audio
 
