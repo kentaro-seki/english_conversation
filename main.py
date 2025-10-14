@@ -52,17 +52,18 @@ if "messages" not in st.session_state:
     st.session_state.llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0.5)
     st.session_state.memory = ConversationSummaryBufferMemory(
         llm=st.session_state.llm,
-        max_token_limit=1000,
+        max_token_limit=1500, #1000
         return_messages=True
     )
 
     # モード「日常英会話」用のChain作成
     st.session_state.chain_basic_conversation = ft.create_chain(ct.SYSTEM_TEMPLATE_BASIC_CONVERSATION)
 
-# 初期表示
-# col1, col2, col3, col4 = st.columns([1, 1, 1, 2])
-# 提出課題用
-col1, col2, col3, col4 = st.columns([2, 2, 3, 3])
+# 初期表示レイアウト設定
+# 旧設定: [1, 1, 1, 2] - 英語レベル欄が広すぎる
+# 現在: [2, 2, 3, 3] - バランス良く調整済み
+# 改善案: [1.5, 2, 3.5, 3] - モード選択をさらに重視
+col1, col2, col3, col4 = st.columns([1.5, 2, 3.5, 3])
 with col1:
     if st.session_state.start_flg:
         st.button("開始", use_container_width=True, type="primary")
@@ -98,10 +99,10 @@ with st.chat_message("assistant", avatar="images/ai_icon.jpg"):
     st.markdown("こちらは生成AIによる音声英会話の練習アプリです。何度も繰り返し練習し、英語力をアップさせましょう。")
     st.markdown("**【操作説明】**")
     st.success("""
-    - モードと再生速度を選択し、「英会話開始」ボタンを押して英会話を始めましょう。
+    - モードと再生速度を選択し、「開始」ボタンを押して英会話を始めましょう。
     - モードは「日常英会話」「シャドーイング」「ディクテーション」から選べます。
     - 発話後、5秒間沈黙することで音声入力が完了します。
-    - 「一時中断」ボタンを押すことで、英会話を一時中断できます。
+    - ディクテーションモードでは「もう一度聞く」ボタンで音声を再生できます。
     """)
 st.divider()
 

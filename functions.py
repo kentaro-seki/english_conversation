@@ -113,9 +113,12 @@ def play_wav(audio_output_file_path, speed=1.0, preserve_file=False):
     if not preserve_file:
         os.remove(audio_output_file_path)
 
-def create_chain(system_template):
+def create_chain(system_template, use_shared_memory=True):
     """
     LLMによる回答生成用のChain作成
+    Args:
+        system_template: システムプロンプトテンプレート
+        use_shared_memory: 共通メモリを使用するかどうか（デフォルト：True）
     """
 
     prompt = ChatPromptTemplate.from_messages([
@@ -123,9 +126,13 @@ def create_chain(system_template):
         MessagesPlaceholder(variable_name="history"),
         HumanMessagePromptTemplate.from_template("{input}")
     ])
+    
+    # 共通メモリを使用して文脈を共有
+    memory = st.session_state.memory if use_shared_memory else None
+    
     chain = ConversationChain(
         llm=st.session_state.llm,
-        memory=st.session_state.memory,
+        memory=memory,
         prompt=prompt
     )
 
