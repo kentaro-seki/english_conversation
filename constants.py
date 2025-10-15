@@ -29,6 +29,14 @@ SYSTEM_TEMPLATE_CREATE_PROBLEM = """
     Format: Limit your response to an English sentence of approximately 15 words with clear and understandable context.
 """
 
+# 汎用的な評価テンプレート（動的プロンプトで使用）
+SYSTEM_TEMPLATE_EVALUATION_GENERIC = """
+    あなたは経験豊富な英語学習指導者です。過去の会話履歴を踏まえ、学習者の進歩と継続的な課題を考慮した評価を行ってください。
+
+    ユーザーからの質問や評価リクエストに対して、詳細で建設的なフィードバックを提供してください。
+    学習者の努力を認め、前向きな姿勢で次の練習に取り組めるような励ましのコメントを含めてください。
+"""
+
 # 問題文と回答を比較し、評価結果の生成を支持するプロンプトを作成
 SYSTEM_TEMPLATE_EVALUATION = """
     あなたは経験豊富な英語学習指導者です。過去の会話履歴を踏まえ、学習者の進歩と継続的な課題を考慮した評価を行ってください。

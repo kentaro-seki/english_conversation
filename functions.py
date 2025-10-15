@@ -166,11 +166,28 @@ def create_problem_and_play_audio():
 
     return problem, llm_response_audio
 
-def create_evaluation():
+def create_evaluation(problem_text, user_text):
     """
-    ユーザー入力値の評価生成
+    ディクテーション用：ユーザー入力値の評価生成
+    Args:
+        problem_text: AIが出題した英文
+        user_text: ユーザーが入力した英文
     """
-
-    llm_response_evaluation = st.session_state.chain_evaluation.predict(input="")
+    
+    # 評価用のプロンプトを動的に作成（問題文と回答文を含む）
+    evaluation_prompt = f"""
+    AIが出題した英文とユーザーが入力した英文を比較評価してください：
+    
+    【出題英文】
+    {problem_text}
+    
+    【ユーザー入力】
+    {user_text}
+    
+    この2つの文章を比較し、詳細な評価を行ってください。
+    """
+    
+    # Chain評価実行
+    llm_response_evaluation = st.session_state.chain_evaluation.predict(input=evaluation_prompt)
 
     return llm_response_evaluation

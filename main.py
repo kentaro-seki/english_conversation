@@ -123,14 +123,19 @@ if st.session_state.shadowing_flg:
 if st.session_state.dictation_flg:
     st.session_state.dictation_button_flg = st.button("ディクテーション開始")
 
-# 「ディクテーション」モードのチャット入力受付時に実行
-if st.session_state.chat_open_flg:
-    st.info("AIが読み上げた音声を、画面下部のチャット欄からそのまま入力・送信してください。")
+# チャット入力：ディクテーションモード専用
+if st.session_state.mode == ct.MODE_3:
+    # 「ディクテーション」モードのチャット入力受付時に実行
+    if st.session_state.chat_open_flg:
+        st.info("AIが読み上げた音声を、画面下部のチャット欄からそのまま入力・送信してください。")
 
-st.session_state.dictation_chat_message = st.chat_input("※「ディクテーション」選択時以外は送信不可")
+    st.session_state.dictation_chat_message = st.chat_input("聞こえた英文をそのまま入力してください")
 
-if st.session_state.dictation_chat_message and not st.session_state.chat_open_flg:
-    st.stop()
+    if st.session_state.dictation_chat_message and not st.session_state.chat_open_flg:
+        st.stop()
+else:
+    # ディクテーション以外のモードではチャット入力を無効化
+    st.session_state.dictation_chat_message = ""
 
 # 「英会話開始」ボタンが押された場合の処理
 if st.session_state.start_flg:
@@ -153,7 +158,7 @@ if st.session_state.start_flg:
             st.session_state.dictation_flg = False
             st.rerun()
         
-        # --- 🔁 もう一度聞くボタン追加（chat_open_flgの条件外） ---
+        # --- 🔁 もう一度聞くボタン追加 ---
         if "last_audio_path" in st.session_state:
             replay_button = st.button("🔁 もう一度聞く")
             
@@ -166,12 +171,9 @@ if st.session_state.start_flg:
                     st.warning("音声データが見つかりません。もう一度問題を生成してください。")
                 # ボタンが押された場合はここで処理を停止
                 st.stop()
+        
         # チャット入力時の処理
-        else:
-            # チャット欄から入力された場合にのみ評価処理が実行されるようにする
-            if not st.session_state.dictation_chat_message:
-                st.stop()
-            
+        if st.session_state.dictation_chat_message:
             # AIメッセージとユーザーメッセージの画面表示
             with st.chat_message("assistant", avatar=ct.AI_ICON_PATH):
                 st.markdown(st.session_state.problem)
@@ -183,13 +185,16 @@ if st.session_state.start_flg:
             st.session_state.messages.append({"role": "user", "content": st.session_state.dictation_chat_message})
             
             with st.spinner('評価結果の生成中...'):
-                system_template = ct.SYSTEM_TEMPLATE_EVALUATION.format(
-                    llm_text=st.session_state.problem,
-                    user_text=st.session_state.dictation_chat_message
+                # 評価用Chainの初期化（初回のみ）
+                if st.session_state.dictation_evaluation_first_flg:
+                    st.session_state.chain_evaluation = ft.create_chain(ct.SYSTEM_TEMPLATE_EVALUATION_GENERIC)
+                    st.session_state.dictation_evaluation_first_flg = False
+                
+                # 問題文とユーザー回答を比較評価
+                llm_response_evaluation = ft.create_evaluation(
+                    st.session_state.problem, 
+                    st.session_state.dictation_chat_message
                 )
-                st.session_state.chain_evaluation = ft.create_chain(system_template)
-                # 問題文と回答を比較し、評価結果の生成を指示するプロンプトを作成
-                llm_response_evaluation = ft.create_evaluation()
             
             # 評価結果のメッセージリストへの追加と表示
             with st.chat_message("assistant", avatar=ct.AI_ICON_PATH):
@@ -281,15 +286,13 @@ if st.session_state.start_flg:
         st.session_state.messages.append({"role": "user", "content": audio_input_text})
 
         with st.spinner('評価結果の生成中...'):
+            # 評価用Chainの初期化（初回のみ）
             if st.session_state.shadowing_evaluation_first_flg:
-                system_template = ct.SYSTEM_TEMPLATE_EVALUATION.format(
-                    llm_text=st.session_state.problem,
-                    user_text=audio_input_text
-                )
-                st.session_state.chain_evaluation = ft.create_chain(system_template)
+                st.session_state.chain_evaluation = ft.create_chain(ct.SYSTEM_TEMPLATE_EVALUATION_GENERIC)
                 st.session_state.shadowing_evaluation_first_flg = False
+            
             # 問題文と回答を比較し、評価結果の生成を指示するプロンプトを作成
-            llm_response_evaluation = ft.create_evaluation()
+            llm_response_evaluation = ft.create_evaluation(st.session_state.problem, audio_input_text)
         
         # 評価結果のメッセージリストへの追加と表示
         with st.chat_message("assistant", avatar=ct.AI_ICON_PATH):
